@@ -8,28 +8,92 @@ import os
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import seaborn as sn
+import seaborn as sns
 
-sn.set_theme(style="ticks")
+sns.set_theme(style="ticks")
 
 #%%
 # Loading the data set
 df = pd.read_csv('stroke dataset.csv')
+target = 'stroke'
 # %%
 df.info()
 df.head()
 
-# Starting inital EDA 
+# Starting initial EDA 
 # -'id' column is randomly generated int digits, not required.    
 # -Converting 'age' column to type int64. 
 # -'avg_glucose_level' is of type float64.
 # -'Stroke' column is the target variable or y. 
 # -Except for 'bmi' and 'avg_glucose_level', all other columns are categorical in nature.
 
+#%%
+# EDA - Box plots to show relationships between stroke and work-type & stroke and marriage status 
+
+ax1 = sns.boxplot(x="ever_married", y="bmi", color="b", data=df)
+plt.title('BMI Distribution by Marital Status')
+ax1.set_xticklabels(['Yes', 'No'])
+plt.show()
+
+print("\nReady to continue.")
+
+ax3 = sns.boxplot(x="Residence_type", y="bmi", color="b", data=df)
+plt.title('BMI Distribution by Residence Type')
+ax3.set_xticklabels(['Urban', 'Rural'])
+plt.show()
+
+print("\nReady to continue.")
+#%%
+	
+from sklearn.model_selection import train_test_split
+
+# Divide the data into training (60%) and test (40%)
+df_train, df_test = train_test_split(df, 
+                                     train_size=0.6, 
+                                     random_state=random_seed, 
+                                     stratify=df[target])
+
+# Divide the test data into validation (50%) and test (50%)
+df_val, df_test = train_test_split(df_test, 
+                                   train_size=0.5, 
+                                   random_state=random_seed, 
+                                   stratify=df_test[target])
+
+# Reset the index
+df_train, df_val, df_test = df_train.reset_index(drop=True), df_val.reset_index(drop=True), df_test.reset_index(drop=True)
+
 # %%
+
+# Drop 'id' column 
+
 df.drop('id', axis = 1, inplace = True)
-df[df['gender'] == 'Other']
-df = df.drop(3116)
+
+#%% 
+
+# Check for missing values
+
+from nan_checker import nan_checker
+
+df_nan = nan_checker(df)
+df_nan
+
+df_miss =df_nan[df_nan['dtype'] == 'float64'].reset_index(drop=True)
+df_miss
+#%% 
+
+# Impute missing data 
+
+from sklearn.impute import SimpleImputer
+
+# If there are missing values
+if len(df_miss['var']) > 0:
+    # The SimpleImputer
+    si = SimpleImputer(missing_values=np.nan, strategy='most_frequent')
+
+    # Impute the variables with missing values in df_train, df_val and df_test 
+    df_train[df_miss['var']] = si.fit_transform(df_train[df_miss['var']])
+    df_val[df_miss['var']] = si.transform(df_val[df_miss['var']])
+    df_test[df_miss['var']] = si.transform(df_test[df_miss['var']])
 # %%
 
 '''
@@ -144,60 +208,7 @@ X['smoking_status'] = X['smoking_status'].astype(np.int64)
 
 X.info()
 
-#%%
-# EDA-Statistical Testing (Welch's T-Test for unequal variance and unbalanced sample sizes)
 
-stroke_yes = df[df['stroke']==1]
-stroke_no = df[df['stroke']==0]
-
-#%%
-import scipy
-from scipy import stats
-
-def welch_dof(x,y):
-    dof = (x.var()/x.size + y.var()/y.size)**2 / ((x.var()/x.size)**2 / (x.size-1) + (y.var()/y.size)**2 / (y.size-1))
-    print(f"Welch-Satterthwaite Degrees of Freedom= {dof:.4f}")
-
-welch_dof(stroke_yes['age'], stroke_no['age'])
-
-def welch_ttest(x, y): 
-    ## Welch-Satterthwaite Degrees of Freedom ##
-    dof = (x.var()/x.size + y.var()/y.size)**2 / ((x.var()/x.size)**2 / (x.size-1) + (y.var()/y.size)**2 / (y.size-1))
-   
-    t, p = stats.ttest_ind(x, y, equal_var = False)
-    
-    print("\n",
-          f"Welch's t-test= {t:.4f}", "\n",
-          f"p-value = {p:.4f}", "\n",
-          f"Welch-Satterthwaite Degrees of Freedom= {dof:.4f}")
-
-welch_ttest(stroke_yes['age'], stroke_no['age'])  
-
-#%%
-# EDA - Logit plots for BMI and glucose level variables 
-import seaborn as sns
-
-# g = sns.lmplot(x="avg_glucose_level", y="stroke", col="gender", hue="gender", data=df, y_jitter=.02, logistic=True)
-# # Binomial regression/logistic
-# g.set(xlim=(40, 270), ylim=(-.05, 1.05))
-
-# plt.show()
-
-# print("\nReady to continue.")
-
-# g = sns.lmplot(x="bmi", y="stroke", col="gender", hue="gender", data=df, y_jitter=.02, logistic=True)
-# # Binomial regression/logistic
-# g.set(xlim=(0, 80), ylim=(-.05, 1.05))
-
-# plt.show()
-#%%
-# EDA - Pairs plot
-sns.set(style="ticks")
-
-sns.pairplot(df, hue="stroke")
-plt.show()
-
-print("\nReady to continue.")
 #%%
 # EDA - Box plots to show relationships between stroke and work-type & stroke and marriage status 
 work_ranking = ["0", "1", "2", "3", "4"]
