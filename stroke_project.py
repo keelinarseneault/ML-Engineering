@@ -1,8 +1,9 @@
 #%%[markdown]
 
-# Stroke Detection Project
+# **Stroke Detection Project**
 
 #%%
+
 # Importing packages
 import os
 import pandas as pd
@@ -10,77 +11,155 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-sns.set_theme(style="ticks")
+#sns.set_theme(style="ticks")
+
+
+#%% [markdown]
+
+# Exploratory Data Analysis 
 
 #%%
-# Loading the data set
+
+# Load the data set
 df = pd.read_csv('stroke dataset.csv')
 target = 'stroke'
 # %%
-df.info()
-df.head()
 
-# Starting initial EDA 
-# -'id' column is randomly generated int digits, not required.    
-# -Converting 'age' column to type int64. 
-# -'avg_glucose_level' is of type float64.
-# -'Stroke' column is the target variable or y. 
-# -Except for 'bmi' and 'avg_glucose_level', all other columns are categorical in nature.
+df.head()
+df.info()
+df.describe()
+
+# Initial Observations
+
+# -'id' column is randomly generated int digits, not useful for analysis   
+# -Convert 'age' to int64 data type
+# -'avg_glucose_level' has data type float64
+# -'Stroke' column is the target variable (y)
+# -Except for 'bmi' and 'avg_glucose_level', all other variables are categorical
 
 #%%
-# EDA - Box plots to show relationships between stroke and work-type & stroke and marriage status 
 
-ax1 = sns.boxplot(x="ever_married", y="bmi", color="b", data=df)
-plt.title('BMI Distribution by Marital Status')
+# Drop ID column 
+df.drop('id', axis = 1, inplace = True)
+
+#%%
+
+# EDA - Plots to show distributions and relationships between categorical and numeric variables
+
+ax1 = sns.catplot(x="hypertension", y="bmi", hue="stroke", kind="violin", data=df, split=True)
+plt.title('BMI Distribution by Stroke Status')
+plt.xlabel("Hypertension")
+plt.ylabel("BMI")
 ax1.set_xticklabels(['Yes', 'No'])
 plt.show()
 
-print("\nReady to continue.")
+ax1 = sns.catplot(x="ever_married", y="bmi", hue="stroke", kind="violin", data=df, split=True)
+plt.title('BMI Distribution by Marital Status')
+plt.xlabel("Marital Status")
+plt.ylabel("BMI")
+ax1.set_xticklabels(['Married', 'Single'])
+plt.show()
 
-ax3 = sns.boxplot(x="Residence_type", y="bmi", color="b", data=df)
+ax3 = sns.catplot(x="Residence_type", y="bmi", hue="stroke", kind="violin", data=df, split=True)
 plt.title('BMI Distribution by Residence Type')
+plt.xlabel("Residence Type")
+plt.ylabel("BMI")
 ax3.set_xticklabels(['Urban', 'Rural'])
 plt.show()
 
-print("\nReady to continue.")
+ax4 = sns.catplot(y="bmi", x="work_type", hue="stroke", kind="violin", data=df, split=True)
+plt.title('BMI Distribution by Work Type')
+plt.xlabel("Work Type")
+plt.ylabel("BMI")
+plt.show()
+
 #%%
-	
+
+# Set random seed
+random_seed = 42
+
+# Set random seed in numpy
+np.random.seed(random_seed)
+
+
+#%%
 from sklearn.model_selection import train_test_split
 
-# Divide the data into training (60%) and test (40%)
+# Divide data into training (60%) and test (40%)
 df_train, df_test = train_test_split(df, 
                                      train_size=0.6, 
                                      random_state=random_seed, 
                                      stratify=df[target])
 
-# Divide the test data into validation (50%) and test (50%)
+# Divide test data into validation (50%) and test (50%)
 df_val, df_test = train_test_split(df_test, 
                                    train_size=0.5, 
                                    random_state=random_seed, 
                                    stratify=df_test[target])
 
-# Reset the index
+# Reset index
 df_train, df_val, df_test = df_train.reset_index(drop=True), df_val.reset_index(drop=True), df_test.reset_index(drop=True)
+
+print("\nDone.")
 
 # %%
 
-# Drop 'id' column 
+# Print dimensions of training, test, and validation data frames
 
-df.drop('id', axis = 1, inplace = True)
+# Training
+print(pd.DataFrame([[df_train.shape[0], df_train.shape[1]]], columns=['# rows', '# columns']))
+
+# Test 
+print(pd.DataFrame([[df_test.shape[0], df_test.shape[1]]], columns=['# rows', '# columns']))
+
+# Validation
+print(pd.DataFrame([[df_val.shape[0], df_val.shape[1]]], columns=['# rows', '# columns']))
+
+
+#%%
+
+# Check for variable commonality between test, training, and validation data
+from common_var_check import common_var_checker
+
+df_common_var = common_var_checker(df_train, df_test, df_val, target)
+print(df_common_var)
+
+#%%
+
+# Get features in training data but not in the validation or test data
+uncommon_train_not_val_test = np.setdiff1d(df_train.columns, df_common_var['common var'])
+
+# Print uncommon features
+pd.DataFrame(uncommon_train_not_val_test, columns=['uncommon feature'])
+
+#%%
+
+# Get features in the test data but not in the training or validation data
+uncommon_test_not_train_val = np.setdiff1d(df_test.columns, df_common_var['common var'])
+
+# Print uncommon features
+pd.DataFrame(uncommon_test_not_train_val, columns=['uncommon feature'])
+
+#%%
+
+# Get features in the validation data but not in the training or test data
+uncommon_val_not_train_test = np.setdiff1d(df_val.columns, df_common_var['common var'])
+
+# Print uncommon features
+pd.DataFrame(uncommon_val_not_train_test, columns=['uncommon feature'])
 
 #%% 
-
 # Check for missing values
 
-from nan_checker import nan_checker
+from nan_check import nan_check
 
-df_nan = nan_checker(df)
+df_nan = nan_check(df)
 df_nan
 
 df_miss =df_nan[df_nan['dtype'] == 'float64'].reset_index(drop=True)
 df_miss
-#%% 
 
+#%% 
 # Impute missing data 
 
 from sklearn.impute import SimpleImputer
@@ -94,6 +173,21 @@ if len(df_miss['var']) > 0:
     df_train[df_miss['var']] = si.fit_transform(df_train[df_miss['var']])
     df_val[df_miss['var']] = si.transform(df_val[df_miss['var']])
     df_test[df_miss['var']] = si.transform(df_test[df_miss['var']])
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+#%%
+
+    
 # %%
 
 '''
@@ -140,8 +234,9 @@ plt.show()
 # 1     209
 # Name: stroke, dtype: int64
 
-# From initial analysis, the dataset seems to be highly unbalanced. 
-# There are 4699 cases without a stroke and 209 cases with a stroke among the participant list. 
+# From initial analysis, the dataset is unbalanced. 
+# There are 4699 cases of stroke = 0 and 209 cases of stroke = 1 among the participants. 
+
 #%%
 # Further subdividing the dataset into male and female sets. 
 

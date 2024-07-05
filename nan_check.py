@@ -1,8 +1,8 @@
 import pandas as pd
 
-def nan_checker(df):
+def nan_check(df):
     """
-    The NaN checker
+    NaN check
 
     Parameters
     ----------
