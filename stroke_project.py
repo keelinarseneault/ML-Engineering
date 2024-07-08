@@ -84,9 +84,9 @@ np.random.seed(random_seed)
 
 from sklearn.model_selection import train_test_split
 
-# Divide data into training (60%) and test (40%)
+# Divide data into training (70%) and test (30%)
 df_train, df_test = train_test_split(df, 
-                                     train_size=0.6, 
+                                     train_size=0.7, 
                                      random_state=random_seed, 
                                      stratify=df[target])
 
@@ -259,6 +259,7 @@ X_test = ss.transform(X_test)
 # Standardize validation data
 X_val = ss.transform(X_val)
 
+print("\nDone.")
 #%%
 
 # Get class distribution 
@@ -270,7 +271,6 @@ pd.Series(y_train).value_counts()
 # Balancing the data set using SMOTE: Synthetic Minority Oversampling Technique. Using this method, the minority target variable is oversampled using random values. 
 # The technique uses the concept of K-NN or K neareast neighbors to intelligently generate synthetic data which resembles the values or shape of the outnumbered data instead of directly copying or reusing pre-existing values. 
 # For more info: https://github.com/scikit-learn-contrib/imbalanced-learn
-
 
 #%%
 
@@ -323,7 +323,7 @@ param_grids = {}
 tol_grid = [10 ** -5, 10 ** -4, 10 ** -3]
 
 # The parameter grid of C
-C_grid = [0.1, 1, 10]
+C_grid = [10, 1, 0.1]
 
 # Update param_grids
 param_grids['lr'] = [{'model__tol': tol_grid,
@@ -394,3 +394,12 @@ auc = roc_auc_score(y_test, y_test_pred)
 
 # Get the dataframe of precision, recall, fscore and auc
 pd.DataFrame([[precision, recall, fscore, auc]], columns=['Precision', 'Recall', 'F1-score', 'AUC'])
+
+# %%
+from sklearn.metrics import ConfusionMatrixDisplay
+
+ConfusionMatrixDisplay.from_predictions(
+   y_test, y_test_pred)
+
+plt.show()
+# %%
