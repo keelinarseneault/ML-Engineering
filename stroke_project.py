@@ -86,7 +86,7 @@ from sklearn.model_selection import train_test_split
 
 # Divide data into training (70%) and test (30%)
 df_train, df_test = train_test_split(df, 
-                                     train_size=0.7, 
+                                     train_size=0.8, 
                                      random_state=random_seed, 
                                      stratify=df[target])
 
@@ -285,16 +285,13 @@ X_smote_train, y_smote_train = smote.fit_resample(X_train, y_train)
 print("\nDone.")
 # %%
 
-# Get class distribution 
-
-pd.Series(y_smote_train).value_counts()
-
 #%% 
 
 # Create dictionaries of models and pipelines
 
 from sklearn.linear_model import LogisticRegression
-from sklearn.pipeline import Pipeline
+from sklearn.ensemble import RandomForestClassifier
+from imblearn.pipeline import Pipeline
 
 models = {'lr': LogisticRegression(class_weight='balanced', random_state=random_seed)}
 
@@ -323,7 +320,7 @@ param_grids = {}
 tol_grid = [10 ** -5, 10 ** -4, 10 ** -3]
 
 # The parameter grid of C
-C_grid = [10, 1, 0.1]
+C_grid = [100, 10, 1, 0.1, 0.01]
 
 # Update param_grids
 param_grids['lr'] = [{'model__tol': tol_grid,

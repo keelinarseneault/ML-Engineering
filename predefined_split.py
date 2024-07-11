@@ -4,8 +4,7 @@ import numpy as np
 def get_train_val_ps(X_train, y_train, X_val, y_val):
     """
     Get the:
-    feature matrix and target velctor in the combined training and validation data
-    target vector in the combined training and validation data
+    feature matrix and target vector in the combined training and validation data
     PredefinedSplit
     
     Parameters
