@@ -1,1 +1,12 @@
+# Capstone Data Submission
+
+## Dataset 1
+### First choice dataset is from a Kaggle competition with the goal of detecting AI generated images versus human generated. The training data contains 79,950 images and test data contains 19,986 images. The data is stored in this repository. 
+#
+## Dataset 2
+### Looked into an object identification dataset containing 9.64 GB of data that would help a model learn to identify certain biological particles in 3D tomograms. 
+#
+## Dataset 3
+### Also considered a prompt recovery project, working in reverse to determine the prompt that generated a given LLM output. This dataset is probably smaller than preferred for this capstone, with only 1400 samples in the test set.
+
 
